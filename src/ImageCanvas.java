@@ -99,4 +99,44 @@ public class ImageCanvas extends JPanel {
         Point lastPoint = newPath.get(newPath.size()-1);
         return lastPoint.distance(firstSeed) < CLOSE_THRESHOLD;
     }
+
+    public BufferedImage createMaskedImage() {
+        if (currentImage == null) return null;
+
+        // 创建与原图相同大小的新图像
+        BufferedImage result = new BufferedImage(
+                currentImage.getWidth(),
+                currentImage.getHeight(),
+                BufferedImage.TYPE_INT_ARGB);
+
+        // 获取所有路径点（包括历史和当前）
+        List<Point> allPathPoints = new ArrayList<>();
+        for (List<Point> path : historicalPaths) {
+            allPathPoints.addAll(path);
+        }
+        allPathPoints.addAll(currentPath);
+
+        // 如果没有路径，返回透明图像
+        if (allPathPoints.isEmpty()) {
+            return result;
+        }
+
+        // 创建多边形
+        Polygon polygon = new Polygon();
+        for (Point p : allPathPoints) {
+            polygon.addPoint(p.x, p.y);
+        }
+
+        // 绘制处理后的图像
+        Graphics2D g2d = result.createGraphics();
+        g2d.setColor(new Color(0, 0, 0, 0)); // 透明背景
+        g2d.fillRect(0, 0, result.getWidth(), result.getHeight());
+
+        // 只保留多边形内的部分
+        g2d.setClip(polygon);
+        g2d.drawImage(currentImage, 0, 0, null);
+        g2d.dispose();
+
+        return result;
+    }
 }
